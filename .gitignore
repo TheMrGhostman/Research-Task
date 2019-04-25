@@ -1,6 +1,7 @@
-Experimenty/.ipynb_checkpoints/Feature Selection-checkpoint.ipynb
-Experimenty/.ipynb_checkpoints/Random Forests -checkpoint.ipynb
-Experimenty/.ipynb_checkpoints/*
+Skripty a Jupytery/.ipynb_checkpoints/Feature Selection-checkpoint.ipynb
+Skripty a Jupytery/.ipynb_checkpoints/Random Forests -checkpoint.ipynb
+Skripty a Jupytery/.ipynb_checkpoints/*
+Skripty a Jupytery/mal\303\251 fs.ipynb
 Data_npy/Chosen ones/.DS_Store
 Data_npy/.npy
 modules/__init__.py
@@ -10,6 +11,10 @@ modules/__pycache__/__init__.cpython-36.pyc
 modules/__pycache__/datasets.cpython-36.pyc
 modules/__pycache__/testy.cpython-36.pyc
 modules/__*
+modules/.ipynb_checkpoints/
 modules/testy.py
 modules/.DS_Store
+modules/modules_old/
+PCA/
 .DS_Store
+.idea/
