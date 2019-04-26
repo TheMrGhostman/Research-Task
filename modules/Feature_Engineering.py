@@ -20,7 +20,9 @@ TO DO:
 			třídě měnit i další parametry				DONE 14.4.2019
 	6) add function, which creates batches
 		- vypočítám příznaky pro každý signal a 
-		uložím je zvlášť v DataFramu
+			uložím je zvlášť v DataFramu (tzn KFold)	DONE 26.4.2019
+	7) add KFold class 									
+		- zrychlení operace s pozorováními				DONE 26.4.2019
 """
 
 
@@ -381,6 +383,29 @@ class Features:
 		return cls(CONFIG, True)
 
 
+	def get_names(self, labels=False):
+		"""
+		Fce vrací názvy příznaků a případně i labely jako seznam.
+			(vhodný jako názvy sloupců v dataframu)
+		"""
+	    names = []
+	    if self.config["H_alpha"]:
+	        names.append("H_alpha")
+	    if self.config["1.d SGF"]:
+	        names.append("1.d SGF")
+	    if self.config["2.d SGF"]:
+	        names.append("2.d SGF")
+	    for i in self.config["MM"]:
+	        names.append(f"MM {i}")
+	    for i in self.config["EMM"]:
+	        names.append(f"EMM {i}")
+	    for i in self.config["MV"]:
+	        names.append(f"MV {i}")
+	    if labels:
+	    	names.append("labels")
+	    return names
+
+
 	def fit_transform(self, Data, diffType=False):
 		"""
 		@upreavená fce prepare_features
@@ -464,3 +489,39 @@ class Features:
 		Tady vstupem není list-of-lists, ale jen array
 		"""
 		return self.fit_transform([Data])
+
+
+class KFold:
+	"""
+	Třída vytvořena pro zrychlení práce s trénovacími a testovacími datasety
+		- nemusím délky pořád dávat jako parametr do funkce
+		- narodzíl od Sklearnu je přímo na míru potřebám
+	"""
+	def __init__(self, lengths = None):
+		if lengths == None:
+			raise ValueError("Nezadali jste parametry!!")    
+		self.lengths = np.cumsum(lengths)
+		
+	def fit_transform(self, x, kFoldIndex):
+		"""
+		Funkce připravuje části pro K-fold crossvalidaci, tzn. vrací k-té fold
+
+		Input:  x           	... pd.DataFrame(), dataframe s příznaky
+				kFoldIndex   	... int, index v listu délek (lengths) - výběr k-tého foldu
+			   
+		Output: train       	... Dataframe bez k-tého foldu
+				test        	... Dataframe k-tého foldu
+		"""
+		if np.shape(x)[0] != np.max(self.lengths):
+			raise ValueError("Počet pozorování se neschoduje s součtem délek")
+			
+		down = max(0, self.lengths[kFoldIndex - 1])
+		up = self.lengths[kFoldIndex]
+		
+		train = copy(x.drop(x.index[down:up]))
+		test = copy(x[down:up])
+
+		return train, test
+
+
+
