@@ -11,7 +11,7 @@ TO DO:
 	5) fix compatability with GridSearch
 	6) add save model method
 	7) remake Cross-Fold method 					DONE 14.4.2019
-	8) add function, which creates batches
+	8) add function, for fast CF
 		- vypočítám příznaky pro každý signal a 
 		uložím je zvlášť v DataFramu
 
@@ -80,7 +80,7 @@ def CF_Boosted_Trees(model, Data, configg, name, location, states=3): #train_dat
 	feat = fe.Features(config=configg, normalize=True)
 
 	start = time()
-	for cross in range(10):
+	for cross in range(K):
 		clf = copy(model)
 
 		train_matrix = feat.fit_transform(Data = train_data[cross])
@@ -106,6 +106,54 @@ def CF_Boosted_Trees(model, Data, configg, name, location, states=3): #train_dat
 	with open(location + name + '_config.pickle' , 'wb') as f:
 		pickle.dump(configg, f)
 	return score_tab.return_table()
+
+
+def fast_CF_Boosted_Trees(model, Data, configg, name, location, states=3):
+	"""
+	Input:  Data  			... musí být Bunch z load_dataset()
+	"""
+	score_tab = Scoring.ScoringTable(location=location, name=name, n_states=states)
+
+	df = CreateDataFrame(Data=Data, config=congigg)
+	KFold = fe.KFold(Data.shape[2])
+
+	start = time()
+	for cross in range(Data.shape[0]):
+		clf = copy(model)
+		X_train, y_train, X_test, y_test = KFold.fit_transform(x=df, kFoldIndex=cross)
+		pred = train_and_predict(model=clf, train=X_train, test=X_test, 
+								 labels= y_train, unsupervised=False)
+		score = Scoring.score(states=pred, results=y_test, unsupervised=False, pocet_stavu=states)
+		#print("score", score)
+		score_tab.add(scores=score)
+		print(f"{cross+1} section done. Time taken from start {time()-start}")
+
+	score_tab.save_table()
+	configg["n_estimators"] = model.n_estimators
+
+	with open(location + name + '_config.pickle' , 'wb') as f:
+		pickle.dump(configg, f)
+	
+	return score_tab.return_table()
+
+
+def CreateDataFrame(Data, config):
+	"""
+	Input:  Data 		 ... formát z load_dataset (Bunch)
+		    congigg      ... konfigurace
+
+	Output: df           ... dataframe se všemi příznaky
+
+	"""
+	feat = fe.Features(config=config, normalize=True)
+	X = feat.fit_transform(Data=Data.H_alpha)
+	lab = d.merge_labels(labels=Data.labels)
+
+	X = np.hstack((X, lab.reshape(lab.shape[0],1)))
+	nm = feat.get_names(labels=True)
+
+	df = pd.DataFrame(data = X, columns = nm)
+	return df
 
 
 def PrincipalComponentAnalysis(model, train_data, test_data, n_comp, configg, model_nm, dataset_nm):

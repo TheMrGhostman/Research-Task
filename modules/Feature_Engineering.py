@@ -388,22 +388,22 @@ class Features:
 		Fce vrací názvy příznaků a případně i labely jako seznam.
 			(vhodný jako názvy sloupců v dataframu)
 		"""
-	    names = []
-	    if self.config["H_alpha"]:
-	        names.append("H_alpha")
-	    if self.config["1.d SGF"]:
-	        names.append("1.d SGF")
-	    if self.config["2.d SGF"]:
-	        names.append("2.d SGF")
-	    for i in self.config["MM"]:
-	        names.append(f"MM {i}")
-	    for i in self.config["EMM"]:
-	        names.append(f"EMM {i}")
-	    for i in self.config["MV"]:
-	        names.append(f"MV {i}")
-	    if labels:
-	    	names.append("labels")
-	    return names
+		names = []
+		if self.config["H_alpha"]:
+			names.append("H_alpha")
+		if self.config["1.d SGF"]:
+			names.append("1.d SGF")
+		if self.config["2.d SGF"]:
+			names.append("2.d SGF")
+		for i in self.config["MM"]:
+			names.append(f"MM {i}")
+		for i in self.config["EMM"]:
+			names.append(f"EMM {i}")
+		for i in self.config["MV"]:
+			names.append(f"MV {i}")
+		if labels:
+			names.append("labels")
+		return names
 
 
 	def fit_transform(self, Data, diffType=False):
@@ -418,8 +418,9 @@ class Features:
 								 vypočtům příznaků na počátečních hodnotách signálu)
 								 Správný "formát" pro vstup, rovnou připravuje funkce load_datasets.H_alpha z
 								 modulu datasets(.py)
+				diffType	 ... Pokud nevkládám pouze .H_alpha (list of arrays), ale .data
 
-			   config        ... konfigurece resp. příznaky které chci počítat z dat spolu s parametry.
+		Private: config      ... konfigurece resp. příznaky které chci počítat z dat spolu s parametry.
 								 Konfigurace je požadována ve formě slovníku (directory), kde klíče jsou
 								 zkratky příznaků a items jsou parametry.
 
@@ -521,7 +522,12 @@ class KFold:
 		train = copy(x.drop(x.index[down:up]))
 		test = copy(x[down:up])
 
-		return train, test
+		X_train = train.drop(["labels"])
+		X_test = test.drop(["labels"])
+		y_train = train.labels
+		y_test = test.labels
+
+		return X_train, y_train, X_test, y_teest
 
 
 
