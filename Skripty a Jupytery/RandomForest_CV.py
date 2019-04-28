@@ -18,8 +18,8 @@ from itertools import chain
 
 #setting path for saving of validations tabs and for import os
 path = os.getcwd()
-path = path.replace(path.split('\\')[-1],'') # pro windows je třeba "\\" u linuxu stačí "/"
-valid_path = path + "\\Validační tabulky\\After FS\\"
+path = path.replace(path.split('/')[-1],'') # pro windows je třeba "\\" u linuxu stačí "/"
+valid_path = path + "/Validační tabulky/After FS/"
 
 
 """
@@ -49,17 +49,17 @@ TRAIN, TEST = d.PrepareCrossFold(DATA.data)
 TRANS_ada = [0, 1, 2, 7, 8, 9, 10, 15, 16, 17, 21, 25, 26, 27, 28] #FS podle adaboost a medianu
 TRANS_rf = [4, 5, 6, 7, 8, 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28] #FS podle rf a medianu
 
-for i in range(5):
-    tabulky = CrossVal(model = RandomForestClassifier(criterion="entropy", max_depth=int(sys.argv[2])),
-                           estimator_list=ESTIM,
-                           train_data=TRAIN,
-                           test_data=TEST,
-                           kombinace=KOMBINACE,
-                           params=PARAMS,
-                           model_nm=f"RandomForest_after_FS_{i}", #"RandomForest",
-                           dataset_nm=f"{sys.argv[1]}",
-                           model_name_param=True,
-                           transformace=TRANS_rf)
+#for i in range(5):
+tabulky = CrossVal(model = RandomForestClassifier(criterion="entropy", max_depth=int(sys.argv[2])),
+                       estimator_list=ESTIM,
+                       train_data=TRAIN,
+                       test_data=TEST,
+                       kombinace=KOMBINACE,
+                       params=PARAMS,
+                       model_nm=f"RandomForest_after_FS_{sys.argv[3]}", #"RandomForest",
+                       dataset_nm=f"{sys.argv[1]}",
+                       model_name_param=True,
+                       transformace=TRANS_rf)
 
 
 print("Hotovo!!!")
