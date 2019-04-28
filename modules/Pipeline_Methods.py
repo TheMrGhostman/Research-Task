@@ -114,7 +114,7 @@ def fast_CF_Boosted_Trees(model, Data, configg, name, location, states=3):
 	"""
 	score_tab = Scoring.ScoringTable(location=location, name=name, n_states=states)
 
-	df = CreateDataFrame(Data=Data, config=congigg)
+	df = CreateDataFrame(Data=Data, config=configg)
 	KFold = fe.KFold(Data.shape[2])
 
 	start = time()
@@ -123,16 +123,18 @@ def fast_CF_Boosted_Trees(model, Data, configg, name, location, states=3):
 		X_train, y_train, X_test, y_test = KFold.fit_transform(x=df, kFoldIndex=cross)
 		pred = train_and_predict(model=clf, train=X_train, test=X_test, 
 								 labels= y_train, unsupervised=False)
-		score = Scoring.score(states=pred, results=y_test, unsupervised=False, pocet_stavu=states)
+		score = Scoring.score(states=pred, results=np.array(y_test), unsupervised=False, pocet_stavu=states)
 		#print("score", score)
 		score_tab.add(scores=score)
-		print(f"{cross+1} section done. Time taken from start {time()-start}")
+		print(f"{cross+1} section done. Time elapsed from start {np.around(time()-start, decimals=2)}")
 
 	score_tab.save_table()
-	configg["n_estimators"] = model.n_estimators
+	info = copy(configg)
+	info["n_estimators"] = model.n_estimators
+	info["learning_rate"] = model.learning_rate
 
 	with open(location + name + '_config.pickle' , 'wb') as f:
-		pickle.dump(configg, f)
+		pickle.dump(info, f)
 	
 	return score_tab.return_table()
 

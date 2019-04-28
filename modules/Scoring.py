@@ -272,7 +272,8 @@ class ScoringTable:
 				self.columns.insert(0, 'n_estim')
 			score_row = np.hstack((np.array([n_estim]), score_row))
 		
-		if self.dataframe == None:
+		#print(isinstance(self.dataframe, np.ndarray))
+		if not isinstance(self.dataframe, np.ndarray):#self.dataframe == None:
 			self.dataframe = score_row
 		else:
 			self.dataframe = np.vstack((self.dataframe, score_row))

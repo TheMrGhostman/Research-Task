@@ -516,18 +516,23 @@ class KFold:
 		if np.shape(x)[0] != np.max(self.lengths):
 			raise ValueError("Počet pozorování se neschoduje s součtem délek")
 			
-		down = max(0, self.lengths[kFoldIndex - 1])
+		
+		if kFoldIndex == 0:
+			down = 0
+		else:
+			down = self.lengths[kFoldIndex-1]
+			
 		up = self.lengths[kFoldIndex]
 		
 		train = copy(x.drop(x.index[down:up]))
 		test = copy(x[down:up])
 
-		X_train = train.drop(["labels"])
-		X_test = test.drop(["labels"])
-		y_train = train.labels
+		X_train = train.drop(columns=["labels"])
+		X_test = test.drop(columns=["labels"])
+		y_train = train['labels']
 		y_test = test.labels
 
-		return X_train, y_train, X_test, y_teest
+		return X_train, y_train, X_test, y_test
 
 
 
