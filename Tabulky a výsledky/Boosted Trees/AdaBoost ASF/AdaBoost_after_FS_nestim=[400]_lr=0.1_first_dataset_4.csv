@@ -1,0 +1,2 @@
+n_estim,Kombinace rysů,délky úseku,Accuracy,Chyby,F míra stavu 0,F míra stavu 1,F míra stavu 2,F míra průměrná,Precision stavu 0,Precision stavu 1,Precision stavu 2,Recall stavu 0,Recall stavu 1,Recall stavu 2
+400,"(1, 1, 1, 1, 1)","[[4, 6], [8, 10], [12, 14, 16], range(5, 17)]",0.8924849149753155,392,0.9305180456665848,0.8983324367939752,0.7705882352941177,0.8664795725848925,0.8884200656352556,0.92880978865406,0.8534201954397395,0.9768041237113402,0.8697916666666666,0.7024128686327078

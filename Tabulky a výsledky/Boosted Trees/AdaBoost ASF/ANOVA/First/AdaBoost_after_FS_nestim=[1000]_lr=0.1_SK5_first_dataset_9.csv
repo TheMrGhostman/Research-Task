@@ -1,0 +1,2 @@
+n_estim,Kombinace rysů,délky úseku,Accuracy,Chyby,F míra stavu 0,F míra stavu 1,F míra stavu 2,F míra průměrná,Precision stavu 0,Precision stavu 1,Precision stavu 2,Recall stavu 0,Recall stavu 1,Recall stavu 2
+1000,custom,custom,0.7260845383759733,985,0.8769574944071589,0.6011904761904762,0.48547945205479454,0.6545424742174765,0.8273921200750469,0.4424972617743702,0.8039927404718693,0.9328397673188789,0.9373549883990719,0.347723704866562
