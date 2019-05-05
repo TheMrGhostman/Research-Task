@@ -39,3 +39,4 @@ PARAMS = [{'kernel': ['rbf'], 'gamma': [1e-1, 1e-2, 1e-3, 1e-4], 'C': [0.001, 0.
 #	print(i)
 
 PM.GridSearch(estimator=SVC() , params=PARAMS,  Data=DATA, config=CONFIG, name='svc_FD_comb_', location=valid_path_SVC, states=4)
+
