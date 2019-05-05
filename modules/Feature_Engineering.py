@@ -395,12 +395,15 @@ class Features:
 			names.append("1.d SGF")
 		if self.config["2.d SGF"]:
 			names.append("2.d SGF")
-		for i in self.config["MM"]:
-			names.append(f"MM {i}")
-		for i in self.config["EMM"]:
-			names.append(f"EMM {i}")
-		for i in self.config["MV"]:
-			names.append(f"MV {i}")
+		if "MM" in self.config.keys():
+			for i in self.config["MM"]:
+				names.append("MM {}".format(i))
+		if "EMM" in self.config.keys():
+			for i in self.config["EMM"]:
+				names.append("EMM {}".format(i))
+		if "MV" in self.config.keys():
+			for i in self.config["MV"]:
+				names.append("MV {}".format(i))
 		if labels:
 			names.append("labels")
 		return names

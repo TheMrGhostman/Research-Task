@@ -237,9 +237,9 @@ class ScoringTable:
 		cols = ['Accuracy', 'Chyby']
 		for j in ['F míra', 'Precision', 'Recall']:
 			for i in range(self.n_states):
-				cols.append(f'{j} stavu {i}')
+				cols.append('{} stavu {}'.fromat(j,i))
 			if j == 'F míra':
-				cols.append(f'{j} průměrná')
+				cols.append('{} průměrná'.format(j))
 		return cols
 
 
@@ -290,3 +290,5 @@ class ScoringTable:
 		if self.location == None:
 			self.location = location
 		df.to_csv(self.location + self.name , index=False)
+
+

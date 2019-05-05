@@ -13,7 +13,7 @@ TO DO:
 	7) remake Cross-Fold method 					DONE 14.4.2019
 	8) add function, for fast CF
 		- vypočítám příznaky pro každý signal a 
-		uložím je zvlášť v DataFramu
+		uložím je zvlášť v DataFramu				DONE 27.4.2019
 
 """
 
@@ -30,6 +30,7 @@ import Scoring
 import Datasets as d
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
+from sklearn.model_selection import ParameterGrid
 
 
 
@@ -98,7 +99,7 @@ def CF_Boosted_Trees(model, Data, configg, name, location, states=3): #train_dat
 		#print("score", score)
 
 		score_tab.add(scores=score)
-		print(f"{cross+1} section done. Time taken from start {time()-start}")
+		print("{} section done. Time taken from start {}".format(cross+1, time()-start))
 
 	score_tab.save_table()
 	configg["n_estimators"] = model.n_estimators
@@ -111,6 +112,7 @@ def CF_Boosted_Trees(model, Data, configg, name, location, states=3): #train_dat
 def fast_CF_Boosted_Trees(model, Data, configg, name, location, states=3):
 	"""
 	Input:  Data  			... musí být Bunch z load_dataset()
+	Output: score_tab		... hotová tabulka pd.DataFrame
 	"""
 	score_tab = Scoring.ScoringTable(location=location, name=name, n_states=states)
 
@@ -126,7 +128,7 @@ def fast_CF_Boosted_Trees(model, Data, configg, name, location, states=3):
 		score = Scoring.score(states=pred, results=np.array(y_test), unsupervised=False, pocet_stavu=states)
 		#print("score", score)
 		score_tab.add(scores=score)
-		print(f"{cross+1} section done. Time elapsed from start {np.around(time()-start, decimals=2)}")
+		print("{} section done. Time elapsed from start {}".fromat(cross+1, np.around(time()-start, decimals=2)))
 
 	score_tab.save_table()
 	info = copy(configg)
@@ -139,10 +141,76 @@ def fast_CF_Boosted_Trees(model, Data, configg, name, location, states=3):
 	return score_tab.return_table()
 
 
+def GridSearch(estimator, params, Data, config, name, location, states=3):
+
+	df = CreateDataFrame(Data=Data, config=config)
+	KFold = fe.KFold(Data.shape[2])
+
+	start = time()
+	GRID = ParameterGrid(params)
+	combinations = len(list(GRID))
+	print("Number of combinations {}".format(combinations))
+	bar = progressbar.ProgressBar(maxval=combinations*10,
+								  widgets=[progressbar.Bar('#', '[', ']'),
+										   ' ', progressbar.Percentage()])
+	combo=0
+	bar.start()
+	for g in GRID:
+		score_tab = Scoring.ScoringTable(location=location, name=name+str(int(combo/10)), n_states=states)
+		for cross in range(Data.shape[0]):
+			clf = copy(estimator)
+			X_train, y_train, X_test, y_test = KFold.fit_transform(x=df, kFoldIndex=cross)
+			clf.set_params(**g)
+			pred = train_and_predict(model=clf, train=X_train, test=X_test, labels=y_train, unsupervised=False)
+			score = Scoring.score(states=pred, results=np.array(y_test), unsupervised=False, pocet_stavu=states)
+			score_tab.add(scores=score)
+			combo +=1
+			bar.update(combo)
+		score_tab.save_table()
+		del score_tab
+		info = copy(config)
+		info["params"] = str(g)
+		with open(location + name + str(int(combo/10)) + '_config.pickle' , 'wb') as f:
+			pickle.dump(info, f)
+			
+	bar.finish()
+	print('Celý proces trval: {} vteřin'.format(np.around(time()-start, decimals=0)))
+	print('Hotovo!!')
+	return 
+
+
+def TreeBasedFeatureSelection(model, Data, config, name, location):
+	"""
+	Fce počítá feature_importances ze "stromových" modelů a vrací je v tabulce
+
+	Input:  Data  			... musí být Bunch z load_dataset()
+	Output: dg				... pd.DataFrame s feature importances
+	"""
+	df = CreateDataFrame(Data=Data, config=config)
+	KFold = fe.KFold(Data.shape[2])
+	FI = []
+	start = time()
+	for cross in range(Data.shape[0]):
+		clf = copy(model)
+		X_train, y_train, _, _ = KFold.fit_transform(x=df, kFoldIndex=cross)
+
+		clf.fit(X_train, y_train)
+
+		FI.append(np.round(clf.feature_importances_, decimals=4))
+		print("{} section done. Time elapsed from start {}".fromat(cross+1, np.around(time()-start, decimals=2)))
+
+	dg = pd.DataFrame(data=np.array(FI), columns=df.columns[:-1])
+	dg = dg.transpose()
+	if '.csv' not in name:
+		name = name + '.csv'
+	dg.to_csv(location + name)
+	return dg
+
+
 def CreateDataFrame(Data, config):
 	"""
 	Input:  Data 		 ... formát z load_dataset (Bunch)
-		    congigg      ... konfigurace
+			congigg      ... konfigurace
 
 	Output: df           ... dataframe se všemi příznaky
 
@@ -197,8 +265,4 @@ def PrincipalComponentAnalysis(model, train_data, test_data, n_comp, configg, mo
 	table.save_table()
 
 	return table.return_table()
-
-
-def CF_Boosted_Trees_in_Batches():
-	pass
 
