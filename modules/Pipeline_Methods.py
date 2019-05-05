@@ -155,8 +155,8 @@ def GridSearch(estimator, params, Data, config, name, location, states=3):
 										   ' ', progressbar.Percentage()])
 	combo=0
 	bar.start()
-	for g in GRID:
-		score_tab = Scoring.ScoringTable(location=location, name=name+str(int(combo/10)), n_states=states)
+	for i, g in enumerate(GRID):
+		score_tab = Scoring.ScoringTable(location=location, name=name+str(g), n_states=states)
 		for cross in range(Data.shape[0]):
 			clf = copy(estimator)
 			X_train, y_train, X_test, y_test = KFold.fit_transform(x=df, kFoldIndex=cross)
@@ -170,7 +170,7 @@ def GridSearch(estimator, params, Data, config, name, location, states=3):
 		del score_tab
 		info = copy(config)
 		info["params"] = g
-		with open(location + name + str(int(combo/10)) + '_config.pickle' , 'wb') as f:
+		with open(location + name + str(i) + '_config.pickle' , 'wb') as f:
 			pickle.dump(info, f)
 			
 	bar.finish()

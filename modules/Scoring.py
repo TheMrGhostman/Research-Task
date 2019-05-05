@@ -237,7 +237,7 @@ class ScoringTable:
 		cols = ['Accuracy', 'Chyby']
 		for j in ['F míra', 'Precision', 'Recall']:
 			for i in range(self.n_states):
-				cols.append('{} stavu {}'.fromat(j,i))
+				cols.append('{} stavu {}'.format(j,i))
 			if j == 'F míra':
 				cols.append('{} průměrná'.format(j))
 		return cols
