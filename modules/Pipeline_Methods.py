@@ -169,7 +169,7 @@ def GridSearch(estimator, params, Data, config, name, location, states=3):
 		score_tab.save_table()
 		del score_tab
 		info = copy(config)
-		info["params"] = str(g)
+		info["params"] = g
 		with open(location + name + str(int(combo/10)) + '_config.pickle' , 'wb') as f:
 			pickle.dump(info, f)
 			

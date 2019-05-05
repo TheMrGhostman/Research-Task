@@ -17,7 +17,7 @@ from sklearn.svm import SVC
 
 path = os.getcwd()
 path = path.replace(path.split('/')[-1],'')
-valid_path_SVC = path + 'Tabulky a výsledky/SVC/FirstDataset'
+valid_path_SVC = path + 'Tabulky a výsledky/SVC/FirstDataset/4_stavy/'
 
 DATA = dat.load_dataset("first_dataset_mod")
 
