@@ -228,7 +228,7 @@ def CreateDataFrame(Data, config):
 
 def PrincipalComponentAnalysis(model, train_data, test_data, n_comp, configg, model_nm, dataset_nm):
 
-	model_name = f"{model_nm}_{dataset_nm}_dataset.csv"
+	model_name = "{}_{}_dataset.csv".format(model_nm, dataset_nm)
 	table = ScoringcoringTable(name = model_name, location = valid_path)
 
 	for cross in range(10):

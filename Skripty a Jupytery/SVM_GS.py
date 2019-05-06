@@ -18,7 +18,7 @@ from sklearn.model_selection import ParameterGrid
 
 path = os.getcwd()
 path = path.replace(path.split('/')[-1],'')
-valid_path_SVC = path + 'Tabulky a výsledky/SVC/FirstDataset/4_stavy/'
+valid_path_SVC = path + 'Tabulky a vysledky/SVC/FirstDataset/4_stavy/'
 
 DATA = dat.load_dataset("first_dataset_mod")
 
