@@ -2,6 +2,22 @@ Skripty a Jupytery/.ipynb_checkpoints/Feature Selection-checkpoint.ipynb
 Skripty a Jupytery/.ipynb_checkpoints/Random Forests -checkpoint.ipynb
 Skripty a Jupytery/.ipynb_checkpoints/*
 Skripty a Jupytery/mal\303\251 fs.ipynb
+Skripty a Jupytery/unit testy before Ladvi.ipynb
+Skripty a Jupytery/ELM_split_preparation.ipynb
+Skripty a Jupytery/Elm spliting - kontrola- second-dataset.ipynb
+Skripty a Jupytery/Elm spliting - kontrola.ipynb
+Skripty a Jupytery/Feature Selection II.ipynb
+Skripty a Jupytery/Feature_selection.py
+Skripty a Jupytery/elm.png
+Skripty a Jupytery/kontrola_gs.py
+Skripty a Jupytery/test.csv
+Skripty a Jupytery/test_config.pickle
+Skripty a Jupytery/test_of_path.py
+Skripty a Jupytery/Předpočítání příznaků.ipynb
+Skripty a Jupytery/Vytváření hromadné tabulky více stavů.ipynb
+Skripty a Jupytery/Vytváření hromadné tabulky.ipynb
+Skripty a Jupytery/ukázka výsledků.ipynb
+
 Data_npy/Chosen ones/.DS_Store
 Data_npy/.npy
 modules/__init__.py
@@ -15,6 +31,8 @@ modules/.ipynb_checkpoints/
 modules/testy.py
 modules/.DS_Store
 modules/modules_old/
+modules/elm_spilting.py
+modules/rolling_tests.py
 PCA/
 .DS_Store
 .idea/
