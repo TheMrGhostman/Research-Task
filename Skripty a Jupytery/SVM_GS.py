@@ -18,9 +18,10 @@ from sklearn.model_selection import ParameterGrid
 
 path = os.getcwd()
 path = path.replace(path.split('/')[-1],'')
-valid_path_SVC = path + 'Tabulky a výsledky/SVC/FirstDataset/4_stavy/'
+valid_path_SVC = path + 'Tabulky a výsledky/SVC/SecondDataset/4_stavy/'
+#valid_path_SVC_test = path + 'Tabulky a výsledky/SVC/FirstDataset/'
 
-DATA = dat.load_dataset("first_dataset_mod")
+DATA = dat.load_dataset("second_dataset_mod")
 
 CONFIG = {'H_alpha': True,
 		  '1.d SGF': True,
@@ -33,10 +34,11 @@ PARAMS = [{'kernel': ['rbf'], 'gamma': [1e-1, 1e-2, 1e-3, 1e-4], 'C': [0.001, 0.
 		  {'kernel': ['sigmoid'], 'gamma': [1e-1, 1e-2, 1e-3, 1e-4], 'C': [0.001, 0.01, 0.1, 1, 10, 50]},
 		  {'kernel': ['linear'], 'C': [0.001, 0.01, 0.1, 1, 10, 50, 100]}]
 
+PARAMS_test = [{'kernel': ['rbf'], 'gamma': [1e-1, 1e-2, 1e-3], 'C': [100]}]
 
 #print(len(ParameterGrid(PARAMS)))
 #for i in list(ParameterGrid(PARAMS)):
 #	print(i)
 
-PM.GridSearch(estimator=SVC() , params=PARAMS,  Data=DATA, config=CONFIG, name='svc_FD_comb_', location=valid_path_SVC, states=4)
+PM.GridSearch(estimator=SVC() , params=PARAMS_test,  Data=DATA, config=CONFIG, name='svc_FD_comb_', location=valid_path_SVC, states=4)
 

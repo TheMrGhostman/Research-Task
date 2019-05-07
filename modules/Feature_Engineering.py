@@ -35,6 +35,7 @@ from scipy.ndimage import convolve1d
 from scipy.signal import savgol_coeffs
 from numba import guvectorize
 from bunch import Bunch
+from Datasets import merge_labels
 
 """
 	Fce pro výpočty příznaků
@@ -493,6 +494,24 @@ class Features:
 		Tady vstupem není list-of-lists, ale jen array
 		"""
 		return self.fit_transform([Data])
+
+
+	def CreateDataFrame(self, Data):
+		"""
+		Input:  Data 		 ... formát z load_dataset (Bunch)
+				congigg      ... konfigurace
+
+		Output: df           ... dataframe se všemi příznaky
+
+		"""
+		X = self.fit_transform(Data=Data.H_alpha)
+		lab = merge_labels(labels=Data.labels)
+
+		X = np.hstack((X, lab.reshape(lab.shape[0],1)))
+		nm = self.get_names(labels=True)
+
+		df = pd.DataFrame(data = X, columns = nm)
+		return df
 
 
 class KFold:
