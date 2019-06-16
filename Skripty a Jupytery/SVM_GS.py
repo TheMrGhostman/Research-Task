@@ -40,5 +40,5 @@ PARAMS_test = [{'kernel': ['rbf'], 'gamma': [1e-1, 1e-2, 1e-3], 'C': [100]}]
 #for i in list(ParameterGrid(PARAMS)):
 #	print(i)
 
-PM.GridSearch(estimator=SVC() , params=PARAMS_test,  Data=DATA, config=CONFIG, name='svc_FD_comb_', location=valid_path_SVC, states=4)
+PM.GridSearch(estimator=SVC() , params=PARAMS_test,  Data=DATA, config=CONFIG, name='svc_SD_comb_', location=valid_path_SVC, states=4)
 

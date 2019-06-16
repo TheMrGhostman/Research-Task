@@ -175,14 +175,14 @@ def Preprocessing(data, pocet_stavu, pocet_feature, labels):
 		   labels        ... je vektor skutečných stavů, na základě těchoto hodnot
 							 jsou data tříděny do skupin
 
-	Output: output       ... je list obsahující matici středních hodot a vícedimenzionální
-							 matice "kovariančních matic" ([np.matrix(), np.array((i,j,k))])
+	Output: output       ... je list obsahující matici středních hodnot a vícedimenzionální
+							matice "kovariančních matic" ([np.matrix(), np.array((i,j,k))])
 	"""
 	if np.shape(data)[0] < np.shape(data)[1]:
 		raise TypeError("data nemají správný formát")
 
-	#print("pocet rysu = ", pocet_feature, "tvar labels = ",
-	#np.shape(labels), "tvar dat: ", np.shape(data))
+	# print("pocet rysu = ", pocet_feature, "tvar labels = ",
+	# np.shape(labels), "tvar dat: ", np.shape(data))
 
 	sorted_data_according_states = {}
 
@@ -191,7 +191,7 @@ def Preprocessing(data, pocet_stavu, pocet_feature, labels):
 		for feature in range(pocet_feature):
 			sorted_data_according_states[state][feature] = []
 
-	for label, _ in enumerate(labels): #label, _ in enumerate(labels)
+	for label, _ in enumerate(labels): # label, _ in enumerate(labels)
 		for feature in range(pocet_feature):
 			sorted_data_according_states[labels[label]][feature].append(data[:, feature][label])
 
@@ -225,9 +225,9 @@ def Set_Noise(data, velikost_sumu = 1/40):
 
 def get_num_features(direc):
 	"""
-	Tato funkce je pomocná k prepare_features a sklouží předběžnému sečtení počtu příznaků
+	Tato funkce je pomocná k prepare_features a slouží předběžnému sečtení počtu příznaků
 
-	Input: direc        ... slovník (directory) se všemy potřebnými příznaky jako klíči a jejich konfiguracemi
+	Input: direc        ... slovník se všemi potřebnými příznaky jako klíči a jejich konfiguracemi
 							jako hodnotami (items)
 
 	Output: length      ... dékla resp. počet příznaků
@@ -236,7 +236,7 @@ def get_num_features(direc):
 	for i in direc.keys():
 		if i in ["1.d SGF", "2.d SGF"]:
 			# na "H_alpha" se neprám, protože ho musím s přidávat vždy (kvůli vstacku)
-			if direc[i] == True:
+			if direc[i]:
 				length += 1
 		elif i == "H_alpha":
 			continue

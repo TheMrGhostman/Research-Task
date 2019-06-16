@@ -13,7 +13,8 @@ TO DO:
 	7) remake Cross-Fold method 					DONE 14.4.2019
 	8) add function, for fast CF
 		- vypočítám příznaky pro každý signal a 
-		uložím je zvlášť v DataFramu				DONE 27.4.2019
+		uložím je zvlášť v DataFrame				DONE 27.4.2019
+	9) add cross-fold method for HMM_modif 			DONE 12.6.2019
 
 """
 
@@ -21,42 +22,105 @@ import numpy as np
 import pandas as pd
 import progressbar
 import pickle
+import warnings
 import itertools as it
 from math import factorial
 from copy import copy
 from time import time
-import Feature_Engineering as fe 
+import Feature_Engineering as FE 
 import Scoring 
-import Datasets as d
+import Datasets as dat
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.model_selection import ParameterGrid
+from sklearn.feature_selection import SelectKBest
 
 
-
-def train_HMM_modif(model, train, transmat, lengths, labels, n_states = 3):
+def train_HMM_modif(model, train, transmat, start_prob, lengths, labels, n_states=3):
 	"""
 	transmat pro 3 stavy, kde 0 = h-mod, 1 = l-mod, 2 = elm, tzn. n_states=3
 	model.transmat_ = (1/n_states)*np.ones((n_states, n_states))
-	model.transmat_[1,:] = [1/2, 1/2, 0] <- zakazuju přechod z l-modu do elmu
+	model.transmat_[1,:] = [1/2, 1/2, 0] <- zakazuji přechod z l-modu do elmu
 
 	"""
 	warnings.filterwarnings('ignore')
 
 	model.init_params = ''
-	model.startprob_ = np.array([0, 1, 0])
-	model.means_, model.covars_ = fe.Preprocessing(train, n_states,
-												   np.shape(train)[1],
-												   labels)
+	model.startprob_ = start_prob # np.array([0, 1, 0])
+	train = np.matrix(train)
+	labels = np.array(labels)
+	model.means_, model.covars_ = FE.Preprocessing(data=train, pocet_stavu=n_states,
+												   pocet_feature=np.shape(train)[1], labels=labels)
 	model.transmat_ = transmat
-	model.fit(train, lengths)
+
+	if np.sum(lengths) != train.shape[0]:
+		print("Něco je špatně!! Délky neodpovídají počtu pozorování!!")
+
+	model.fit(X=train, lengths=lengths)
+	
 	return model
+
+
+def CF_HMM_modif(model, Data, config, transmat, startprob, name, location, states):
+	"""
+	Funkce pro provedení Cross-fold validace Hidden Markov Modelu (modifikovaného).
+
+	Input: model 			... GaussianHMM s již definovanými parametry
+			Data 			... list-of-lists (Datasets.load_dataset format)
+			config 			... konfigurace příznaků
+			trans_mat 		... předpočítává matice přechodů, resp. její inicializace
+			start_prob 		... pravděpodobnost prvního stavu
+			states 			... počet stavů
+
+	"""
+	score_tab = Scoring.ScoringTable(location=location, name=name, n_states=states)
+
+	feature = FE.Features(config=config, normalize=True)
+	df = feature.CreateDataFrame(Data=Data)
+	# df = CreateDataFrame(Data=Data, config=config)
+	KFold = FE.KFold(Data.shape[2])
+
+	history = {"TM":[], "Mean":[], "Cov":[]}
+
+	start = time()
+	for cross in range(Data.shape[0]):
+		clf_un = copy(model)
+		X_train, y_train, X_test, y_test = KFold.fit_transform(x=df, kFoldIndex=cross)
+
+		lengths = np.copy(Data.shape[2])
+		lengths = np.delete(lengths, cross)
+
+		clf = train_HMM_modif(model=clf_un, train=X_train, transmat=transmat, startprob=startprob, lengths=lengths, labels=y_train, n_states=states)
+		
+		y_pred = clf.predict(X_test)
+
+		score = Scoring.score(states=y_pred, results=np.array(y_test), unsupervised=False, pocet_stavu=states)
+
+		# print("score", score)
+		score_tab.add(scores=score)
+		print("{} section done. Time elapsed from start {}".format(cross+1, np.around(time()-start, decimals=2)))
+		history["Mean"].append(clf.means_) 
+		history["Cov"].append(clf.covars_)
+		history["TM"].append(clf.transmat_)
+
+
+	score_tab.save_table()
+	info = copy(config)
+
+	info["trasition_matrix"] = history["TM"]
+	info["means"] = history["Mean"]
+	info["covariance_matrix"] = history["Cov"]
+
+	with open(location + name + '_config.pickle' , 'wb') as f:
+		pickle.dump(info, f)
+	
+	return score_tab.return_table()
 
 
 def train_and_predict(model, train, test, labels, unsupervised):
 	"""
 	Až tuhle fci nahradím v ostatních funkcích, tak jí smažu.
-	Dříve jsem jí používal pro šponavou práci s hmm. Nyní je nahrazen train_HMM_modif
+	Dříve jsem jí používal pro špinavou práci s hmm. Nyní je nahrazen train_HMM_modif
 	"""
 	if unsupervised:
 		model.fit(train)
@@ -65,20 +129,19 @@ def train_and_predict(model, train, test, labels, unsupervised):
 	return model.predict(test)
 
 
-def CF_Boosted_Trees(model, Data, configg, name, location, states=3): #train_data, test_data
+def CF_Boosted_Trees(model, Data, config, name, location, states=3): #train_data, test_data
 	"""
 	Input:
 			train_data  ... list-of-lists 
 
 	"""
-	train_data, test_data = d.PrepareCrossFold(Data.H_alpha)
-	train_labels, test_labels = d.PrepareCrossFold(Data.labels)
+	train_data, test_data = dat.PrepareCrossFold(Data.H_alpha)
+	train_labels, test_labels = dat.PrepareCrossFold(Data.labels)
 
-	
 	K = len(train_data)
 	score_tab = Scoring.ScoringTable(location=location, name=name, n_states=states)
 
-	feat = fe.Features(config=configg, normalize=True)
+	feat = FE.Features(config=config, normalize=True)
 
 	start = time()
 	for cross in range(K):
@@ -86,52 +149,53 @@ def CF_Boosted_Trees(model, Data, configg, name, location, states=3): #train_dat
 
 		train_matrix = feat.fit_transform(Data = train_data[cross])
 		test_matrix = feat.fit_transform_batch(Data=test_data[cross])
-		target = d.merge_labels(train_labels[cross])
+		target = dat.merge_labels(train_labels[cross])
 
-		#print(np.shape(train_matrix), np.shape(target))
-		#print(np.shape(test_matrix), np.shape(test_labels[cross]))
+		# print(np.shape(train_matrix), np.shape(target))
+		# print(np.shape(test_matrix), np.shape(test_labels[cross]))
 
 		pred = train_and_predict(model=clf, train=train_matrix, test=test_matrix, 
 								 labels= target, unsupervised=False)
 
 		score = Scoring.score(states=pred, results=test_labels[cross], unsupervised=False, pocet_stavu=states)
 
-		#print("score", score)
+		# print("score", score)
 
 		score_tab.add(scores=score)
 		print("{} section done. Time taken from start {}".format(cross+1, time()-start))
 
 	score_tab.save_table()
-	configg["n_estimators"] = model.n_estimators
+	config["n_estimators"] = model.n_estimators
 
 	with open(location + name + '_config.pickle' , 'wb') as f:
-		pickle.dump(configg, f)
+		pickle.dump(config, f)
 	return score_tab.return_table()
 
 
-def fast_CF_Boosted_Trees(model, Data, configg, name, location, states=3):
+def fast_CF_Boosted_Trees(model, Data, config, name, location, states=3):
 	"""
 	Input:  Data  			... musí být Bunch z load_dataset()
 	Output: score_tab		... hotová tabulka pd.DataFrame
 	"""
 	score_tab = Scoring.ScoringTable(location=location, name=name, n_states=states)
 
-	df = CreateDataFrame(Data=Data, config=configg)
-	KFold = fe.KFold(Data.shape[2])
+	feature = FE.Features(config=config, normalize=True)
+	df = feature.CreateDataFrame(Data=Data)
+	# df = CreateDataFrame(Data=Data, config=config)
+	KFold = FE.KFold(Data.shape[2])
 
 	start = time()
 	for cross in range(Data.shape[0]):
 		clf = copy(model)
 		X_train, y_train, X_test, y_test = KFold.fit_transform(x=df, kFoldIndex=cross)
-		pred = train_and_predict(model=clf, train=X_train, test=X_test, 
-								 labels= y_train, unsupervised=False)
-		score = Scoring.score(states=pred, results=np.array(y_test), unsupervised=False, pocet_stavu=states)
-		#print("score", score)
+		y_pred = train_and_predict(model=clf, train=X_train, test=X_test, labels=y_train, unsupervised=False)
+		score = Scoring.score(states=y_pred, results=np.array(y_test), unsupervised=False, pocet_stavu=states)
+		# print("score", score)
 		score_tab.add(scores=score)
-		print("{} section done. Time elapsed from start {}".fromat(cross+1, np.around(time()-start, decimals=2)))
+		print("{} section done. Time elapsed from start {}".format(cross+1, np.around(time()-start, decimals=2)))
 
 	score_tab.save_table()
-	info = copy(configg)
+	info = copy(config)
 	info["n_estimators"] = model.n_estimators
 	info["learning_rate"] = model.learning_rate
 
@@ -144,7 +208,7 @@ def fast_CF_Boosted_Trees(model, Data, configg, name, location, states=3):
 def GridSearch(estimator, params, Data, config, name, location, states=3):
 
 	df = CreateDataFrame(Data=Data, config=config)
-	KFold = fe.KFold(Data.shape[2])
+	KFold = FE.KFold(Data.shape[2])
 
 	start = time()
 	GRID = ParameterGrid(params)
@@ -187,7 +251,7 @@ def TreeBasedFeatureSelection(model, Data, config, name, location):
 	Output: dg				... pd.DataFrame s feature importances
 	"""
 	df = CreateDataFrame(Data=Data, config=config)
-	KFold = fe.KFold(Data.shape[2])
+	KFold = FE.KFold(Data.shape[2])
 	FI = []
 	start = time()
 	for cross in range(Data.shape[0]):
@@ -207,6 +271,39 @@ def TreeBasedFeatureSelection(model, Data, config, name, location):
 	return dg
 
 
+def FeatureScoring(data, config, method, printout=True):
+	"""
+	Funkce je určena k Cross-Fold ohodnocení příznaků s využitím SelectKBest
+
+
+	Input:  Data 		 ... formát z load_dataset (Bunch)
+			congfig      ... konfigurace
+			method 		 ... metoda (mutual_info_classif, f_classif)
+
+	Output: df           ... dataframe se všemi příznaky
+
+	"""
+	History = []
+
+	feature = FE.Features(config=config, normalize=True)
+	df = feature.CreateDataFrame(Data=data)
+	# df = CreateDataFrame(Data=data, config=config)
+	KFold = FE.KFold(data.shape[2])
+
+	for cross in range(data.shape[0]):
+		X_train, y_train, _,_ = KFold.fit_transform(x=df, kFoldIndex=cross)
+		KB = SelectKBest(method, k="all")
+		KB.fit(X_train, y_train)
+		History.append(KB.scores_)
+		if printout:
+			print("Step {}/{} done.".format(cross+1, data.shape[0]))
+
+	History = pd.DataFrame(data=np.matrix(History).T, index=list(df.columns)[:-1], columns=np.arange(data.shape[0])+1)
+	History.loc[:, "average"] = History.values.mean(axis=1)
+
+	return History
+
+
 def CreateDataFrame(Data, config):
 	"""
 	Input:  Data 		 ... formát z load_dataset (Bunch)
@@ -215,54 +312,59 @@ def CreateDataFrame(Data, config):
 	Output: df           ... dataframe se všemi příznaky
 
 	"""
-	feat = fe.Features(config=config, normalize=True)
+	feat = FE.Features(config=config, normalize=True)
 	X = feat.fit_transform(Data=Data.H_alpha)
-	lab = d.merge_labels(labels=Data.labels)
+	lab = dat.merge_labels(labels=Data.labels)
 
 	X = np.hstack((X, lab.reshape(lab.shape[0],1)))
 	nm = feat.get_names(labels=True)
 
-	df = pd.DataFrame(data = X, columns = nm)
+	df = pd.DataFrame(data=X, columns=nm)
 	return df
 
 
-def PrincipalComponentAnalysis(model, train_data, test_data, n_comp, configg, model_nm, dataset_nm):
+def PrincipalComponentAnalysis(model, Data, n_comp, config, name, location, states=3, model_type="Tree"):
 
-	model_name = "{}_{}_dataset.csv".format(model_nm, dataset_nm)
-	table = ScoringcoringTable(name = model_name, location = valid_path)
+	score_tab = Scoring.ScoringTable(name=name, location=location)
+	feature = FE.Features(config=config, normalize=True)
+	df = feature.CreateDataFrame(Data=Data)
 
-	for cross in range(10):
-		start = time()
-		train_matrix = fe.prepare_features(data=train_data[cross], config=configg)
-		test_matrix = fe.prepare_features(data=test_data[cross], config=configg)
-		labels = d.merge_labels(d.get_layer(train_data[cross],2))
+	KFold = FE.KFold(Data.shape[2])
 
+	start = time()
+	for cross in range(Data.shape[0]):
 		clf = copy(model)
+		X_train, y_train, X_test, y_test = KFold.fit_transform(x=df, kFoldIndex=cross)
 
 		scale = StandardScaler()
-		train_matrix = scale.fit_transform(X=train_matrix, y=labels)
-		test_matrix = scale.transform(X=test_matrix)
+		X_train = scale.fit_transform(X=X_train, y=y_train)
+		X_test = scale.transform(X=X_test)
 
 		pca = PCA(n_components=n_comp)
-		train_matrix = pca.fit_transform(X=train_matrix)
-		test_matrix = pca.transform(X=test_matrix)
+		X_train = pca.fit_transform(X=X_train)
+		X_test = pca.transform(X=X_test)
 
-		states = train_and_predict(clf,
-								   train_matrix, test_matrix, [], labels,
-								   unsupervised=False, HMMmodified=False)
+		y_pred = train_and_predict(model=clf, train=X_train, test=X_test, labels=y_train, unsupervised=False)
 
-		[a, m, f, f_a, p, r] = Scoring.score(states, test_data[cross][0][2], unsupervised=False)
+		score = Scoring.score(states=y_pred, results=np.array(y_test), unsupervised=False, pocet_stavu=states)
 
-		kombinace = "pca"
-		params = "pca"
+		score_tab.add(scores=score)
+		print("{} section done. Time elapsed from start {}".format(cross + 1, np.around(time() - start, decimals=2)))
 
-		table.add(scores = [a, m, f, f_a, p, r], 
-				  n_estim = clf.n_estimators, 
-				  configg={"Komb": kombinace, "Param": params})
+	score_tab.save_table()
 
-		print(cross + 1, '. -> ', round(time()-start), "seconds")
+	info = copy(config)
+	info["pca component"] = n_comp
+	if model_type == "Tree":
+		info["n_estimators"] = model.n_estimators
+		info["learning_rate"] = model.learning_rate
+	if model_type == "SVM":
+		info["C"] = model.C
+		info["kernel"] = model.kernel
+		if model.kernel != 'linear':
+			info["gamma"] = model.gamma
 
-	table.save_table()
+	with open(location + name + '_config.pickle', 'wb') as f:
+		pickle.dump(info, f)
 
-	return table.return_table()
-
+	return score_tab.return_table()
