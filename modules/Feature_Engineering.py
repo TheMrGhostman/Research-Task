@@ -31,8 +31,10 @@ import numpy as np
 import pandas as pd
 from math import factorial
 from copy import copy
+from itertools import chain
 from scipy.ndimage import convolve1d
 from scipy.signal import savgol_coeffs
+from scipy.interpolate import interp1d
 from numba import guvectorize
 from bunch import Bunch
 from Datasets import merge_labels
@@ -235,11 +237,13 @@ def get_num_features(direc):
 	length = 0
 	for i in direc.keys():
 		if i in ["1.d SGF", "2.d SGF"]:
-			# na "H_alpha" se neprám, protože ho musím s přidávat vždy (kvůli vstacku)
+			# na "H_alpha" se neptám, protože ho musím s přidávat vždy (kvůli vstacku)
 			if direc[i]:
 				length += 1
 		elif i == "H_alpha":
 			continue
+		elif i == "signal" and direc[i]:
+			length += 1			# kvůli hsf a lsf (více typů signálů)
 		else:
 			length += len(direc[i])
 	return length
@@ -512,6 +516,61 @@ class Features:
 
 		df = pd.DataFrame(data = X, columns = nm)
 		return df
+
+class FeatureExtended:
+	def __init__(self, config, normalize):
+		"""
+		:param config: Konfigurace příznaků
+						{"H_alpha": {"signal": True,
+									"1.d SGF": True,
+									"2.d SGF": True,
+									"MM": [4,6,8,10,12,14,16],
+									"EMM": [4,6,8,10,12,14,16],
+									"MV": [5,6,7,8,9,10,11,12,13,14,15,16]},
+						"BR_current": {"signal": True,
+										"1.d SGF": True,
+										"2.d SGF": True,
+										"MM": [4,6,8,10,12,14,16],
+										"EMM": [4,6,8,10,12,14,16],
+										"MV": [5,6,7,8,9,10,11,12,13,14,15,16]},
+						...}
+		:param normalize: "normalizace" signálů
+		"""
+		self.config = config
+		self.normalize_global = normalize
+		self.savgol_params_global = Bunch(window=9, polyorder=2, pos_back=5)
+		self.sample_rate = 0 # downsampling -> data[//self.sample_rate]
+		# feature configuration for H_alpha signal
+		self.hsf_features = ["H_alpha", "BR_current", "BV_current", "MFPS_current", "raw_density"]
+		self.lsf_features = ["EFIT_magnetic_axis_z", "EFIT_minor_radius", "EFIT_plasma_area", "EFIT_plasma_energy",
+							 "EFIT_plasma_value", "q95"]
+
+		if (not set(self.hsf_features) <= set(self.config)) or (not set(self.hsf_features) <= set(self.config)):
+			raise IndexError("Some feature name is missing in CONFIG.")
+
+		self.feature_configs_hsf = {name: config[name] for name in self.hsf_features}
+		self.feature_configs_lsf = {name: config[name] for name in self.lsf_features}
+
+
+	def fit_transform(self, data):
+		#output = np.zeros((get_num_features(direc=self.)+1, 1))
+		for shot_index, shot_path in enumerate(data):
+			pass
+
+	def load_and_fit(self, load_data_class):
+		tmp = 1 - int(self.hsf_features["H_alpha"].signal)
+		num_features = np.sum([get_num_features(direc=i) for i in chain(self.hsf_features, self.lsf_features)]) + 1
+		for shot_index, shot_path in enumerate(load_data_class):
+			# load processed data dataframe
+			shot_signals = load_data_class.load(shot_index)
+			# resampling
+			if self.sample_rate.hsf != 0 and self.sample_rate.hsf < 0: # downsampling
+				shot_signals.hsf = shot_signals.hsf[//np.abs(self.sample_rate.hsf)]
+				shot_signals.labels = shot_signals.labels[//np.abs(self.sample_rate.hsf)]
+
+
+
+
 
 
 class KFold:

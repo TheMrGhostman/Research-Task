@@ -228,7 +228,7 @@ def GridSearch(estimator, params, Data, config, name, location, states=3):
 			pred = train_and_predict(model=clf, train=X_train, test=X_test, labels=y_train, unsupervised=False)
 			score = Scoring.score(states=pred, results=np.array(y_test), unsupervised=False, pocet_stavu=states)
 			score_tab.add(scores=score)
-			combo +=1
+			combo += 1
 			bar.update(combo)
 		score_tab.save_table()
 		del score_tab

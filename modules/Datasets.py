@@ -4,6 +4,7 @@ import os
 from itertools import chain
 from bunch import Bunch
 from copy import copy
+import deepdish
 
 #univerzálně a tak trochu natvrdo zadané umístění
 path = os.getcwd()
@@ -73,6 +74,34 @@ def load_dataset(name, dataset_only=False):
 
     return Bunch(data=dataset, time=time, H_alpha=H_alpha, labels=labels,
                  signals=signals, shape=shape(dataset))
+
+
+def load_processed_data(name, dataset_path=False):
+    if not dataset_path:
+        names = np.load(main_folder_path + "Data_npy/{}".format(name)).tolist()
+    else:
+        names = np.load(dataset_path).tolist()
+
+    loaded_data = [deepdish.io.load(path + name) for name in chain(names)]
+
+    return loaded_data
+
+class LoadLargeData:
+    def __init__(self, name, dataset_path=False, verbose=True):
+        if not dataset_path:
+            self.names = np.load(main_folder_path + "Data_npy/{}".format(name)).tolist()
+        else:
+            self.names = np.load(dataset_path).tolist()
+        self.number_of_shots = len(self.names)
+        if verbose:
+            print("Number of shots: {}".format(self.number_of_shots))
+            for i,j in enumerate(self.names):
+                print("{} of {}: {}".format(i, self.number_of_shots-1, j))
+
+    def load(self, shot_index):
+        if shot_index >= self.number_of_shots:
+            raise IndexError("Shot index out of bounds")
+        return deepdish.io.load(path + self.names[shot_index])
 
 
 
