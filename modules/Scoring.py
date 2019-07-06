@@ -17,6 +17,24 @@ from math import factorial, isnan
 from copy import copy
 from sympy.utilities.iterables import multiset_permutations
 import warnings
+import progressbar
+
+
+class Bar:
+	def __init__(self, max_val):
+		self.bar = progressbar.ProgressBar(
+											maxval=max_val, widgets=[progressbar.Bar('#', '[', ']'),
+											' ', progressbar.Percentage()]
+		)
+
+	def start(self):
+		self.bar.start()
+
+	def update(self, iterace):
+		self.bar.update(iterace)
+
+	def finish(self):
+		self.bar.finish()
 
 
 def srovnej(res, data, pocet_stavu=3):

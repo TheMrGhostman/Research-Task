@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import os
 from bunch import Bunch
-from time import time
+from time import time, sleep
 import Feature_Engineering
 import Datasets
 import Scoring
@@ -11,10 +11,15 @@ from sklearn.ensemble import AdaBoostClassifier
 import pickle
 
 
-Data = Datasets.load_dataset("first_dataset")
-X = Data.data
-x = Data.H_alpha
-y = Data.labels
+def load_data():
+	Data = Datasets.load_dataset("first_dataset")
+	X = Data.data
+	x = Data.H_alpha
+	y = Data.labels
+	return X,x,y
+
+
+#X,x,y = load_data()
 
 CONFIG = {"H_alpha": True,
 		  "1.d SGF": True,
@@ -43,7 +48,7 @@ def test_prepare_features(X,x,y):
 	print("Shodují se výstupy prepare_features a Features.fit_transform? ", np.allclose(PF,FC))
 
 
-test_prepare_features(X=X,x=x,y=y)
+# test_prepare_features(X=X,x=x,y=y)
 
 """
 Test PrepareCrossFold jen s Bunch.H_alpha
@@ -63,7 +68,9 @@ def test_PrepareCrossFold(Data, vypis= False):
 				print(f'{m} Souhlasí {i+1} signál? ', YN)
 	print("Shodují se všechny? ", shodujiSe)
 
-test_PrepareCrossFold(Data=Data)
+
+# test_PrepareCrossFold(Data=Data)
+
 
 def test_CF_BT(data):
 	model = AdaBoostClassifier(n_estimators= 10)
@@ -79,7 +86,7 @@ def test_CF_BT(data):
 		print(pickle.load(f))
 
 
-test_CF_BT(Data)
+#test_CF_BT(Data)
 
 """
 tmp1, tmp2 = Datasets.PrepareCrossFold(Data.data)
@@ -88,3 +95,16 @@ train, test = Datasets.PrepareCrossFold(Data.H_alpha)
 print(tmp2[0][2])
 print(test)
 """
+
+
+def test_progressbar(max_val, sleep_time=2):
+	bar = Scoring.Bar(max_val)
+	bar.start()
+	for i in range(max_val):
+		bar.update(i+1)
+		sleep(sleep_time)
+	bar.finish()
+	print("all is good")
+
+
+test_progressbar(60)

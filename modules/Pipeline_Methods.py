@@ -1,14 +1,14 @@
 # Pipeline_Methods
 # Autor: Matěj Zorek
-# Modul slouží k zrychlení tréninku a testování modelů
+# Modul slouží k zrychlení tréninku a testování modelů
 
 """
 TO DO:
 	1) fix modules calling							DONE 13.4.2019
 	2) fix for more states (or remake)				DONE 14.4.2019
-	3) fix compatability for ScoringTable 			DONE 14.3.2019
+	3) fix compatibility for ScoringTable 			DONE 14.3.2019
 	4) add train_batches
-	5) fix compatability with GridSearch
+	5) fix compatibility with GridSearch
 	6) add save model method
 	7) remake Cross-Fold method 					DONE 14.4.2019
 	8) add function, for fast CF
@@ -27,8 +27,8 @@ import itertools as it
 from math import factorial
 from copy import copy
 from time import time
-import Feature_Engineering as FE 
-import Scoring 
+import Feature_Engineering as FE
+import Scoring
 import Datasets as dat
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
@@ -57,7 +57,7 @@ def train_HMM_modif(model, train, transmat, start_prob, lengths, labels, n_state
 		print("Něco je špatně!! Délky neodpovídají počtu pozorování!!")
 
 	model.fit(X=train, lengths=lengths)
-	
+
 	return model
 
 
@@ -90,8 +90,9 @@ def CF_HMM_modif(model, Data, config, transmat, startprob, name, location, state
 		lengths = np.copy(Data.shape[2])
 		lengths = np.delete(lengths, cross)
 
-		clf = train_HMM_modif(model=clf_un, train=X_train, transmat=transmat, startprob=startprob, lengths=lengths, labels=y_train, n_states=states)
-		
+		clf = train_HMM_modif(model=clf_un, train=X_train, transmat=transmat, start_prob=startprob,
+							  lengths=lengths, labels=y_train, n_states=states)
+
 		y_pred = clf.predict(X_test)
 
 		score = Scoring.score(states=y_pred, results=np.array(y_test), unsupervised=False, pocet_stavu=states)
@@ -99,7 +100,7 @@ def CF_HMM_modif(model, Data, config, transmat, startprob, name, location, state
 		# print("score", score)
 		score_tab.add(scores=score)
 		print("{} section done. Time elapsed from start {}".format(cross+1, np.around(time()-start, decimals=2)))
-		history["Mean"].append(clf.means_) 
+		history["Mean"].append(clf.means_)
 		history["Cov"].append(clf.covars_)
 		history["TM"].append(clf.transmat_)
 
@@ -111,9 +112,9 @@ def CF_HMM_modif(model, Data, config, transmat, startprob, name, location, state
 	info["means"] = history["Mean"]
 	info["covariance_matrix"] = history["Cov"]
 
-	with open(location + name + '_config.pickle' , 'wb') as f:
+	with open(location + name + '_config.pickle', 'wb') as f:
 		pickle.dump(info, f)
-	
+
 	return score_tab.return_table()
 
 
@@ -129,7 +130,7 @@ def train_and_predict(model, train, test, labels, unsupervised):
 	return model.predict(test)
 
 
-def CF_Boosted_Trees(model, Data, config, name, location, states=3): #train_data, test_data
+def CF_Boosted_Trees(model, Data, config, name, location, states=3):  # train_data, test_data
 	"""
 	Input:
 			train_data  ... list-of-lists 
@@ -154,8 +155,7 @@ def CF_Boosted_Trees(model, Data, config, name, location, states=3): #train_data
 		# print(np.shape(train_matrix), np.shape(target))
 		# print(np.shape(test_matrix), np.shape(test_labels[cross]))
 
-		pred = train_and_predict(model=clf, train=train_matrix, test=test_matrix, 
-								 labels= target, unsupervised=False)
+		pred = train_and_predict(model=clf, train=train_matrix, test=test_matrix, labels=target, unsupervised=False)
 
 		score = Scoring.score(states=pred, results=test_labels[cross], unsupervised=False, pocet_stavu=states)
 
@@ -199,9 +199,9 @@ def fast_CF_Boosted_Trees(model, Data, config, name, location, states=3):
 	info["n_estimators"] = model.n_estimators
 	info["learning_rate"] = model.learning_rate
 
-	with open(location + name + '_config.pickle' , 'wb') as f:
+	with open(location + name + '_config.pickle', 'wb') as f:
 		pickle.dump(info, f)
-	
+
 	return score_tab.return_table()
 
 
@@ -214,10 +214,8 @@ def GridSearch(estimator, params, Data, config, name, location, states=3):
 	GRID = ParameterGrid(params)
 	combinations = len(list(GRID))
 	print("Number of combinations {}".format(combinations))
-	bar = progressbar.ProgressBar(maxval=combinations*10,
-								  widgets=[progressbar.Bar('#', '[', ']'),
-										   ' ', progressbar.Percentage()])
-	combo=0
+	bar = progressbar.ProgressBar(maxval=combinations*10, widgets=[progressbar.Bar('#', '[', ']'), ' ', progressbar.Percentage()])
+	combo = 0
 	bar.start()
 	for i, g in enumerate(GRID):
 		score_tab = Scoring.ScoringTable(location=location, name=name+str(g)+str(i), n_states=states)
@@ -234,13 +232,13 @@ def GridSearch(estimator, params, Data, config, name, location, states=3):
 		del score_tab
 		info = copy(config)
 		info["params"] = g
-		with open(location + name + str(g) + str(i) + '_config.pickle' , 'wb') as f:
+		with open(location + name + str(g) + str(i) + '_config.pickle', 'wb') as f:
 			pickle.dump(info, f)
-			
+
 	bar.finish()
 	print('Celý proces trval: {} vteřin'.format(np.around(time()-start, decimals=0)))
 	print('Hotovo!!')
-	return 
+	return
 
 
 def TreeBasedFeatureSelection(model, Data, config, name, location):
@@ -261,7 +259,7 @@ def TreeBasedFeatureSelection(model, Data, config, name, location):
 		clf.fit(X_train, y_train)
 
 		FI.append(np.round(clf.feature_importances_, decimals=4))
-		print("{} section done. Time elapsed from start {}".fromat(cross+1, np.around(time()-start, decimals=2)))
+		print("{} section done. Time elapsed from start {}".format(cross+1, np.around(time()-start, decimals=2)))
 
 	dg = pd.DataFrame(data=np.array(FI), columns=df.columns[:-1])
 	dg = dg.transpose()
@@ -277,7 +275,7 @@ def FeatureScoring(data, config, method, printout=True):
 
 
 	Input:  Data 		 ... formát z load_dataset (Bunch)
-			congfig      ... konfigurace
+			config      ... konfigurace
 			method 		 ... metoda (mutual_info_classif, f_classif)
 
 	Output: df           ... dataframe se všemi příznaky
@@ -307,7 +305,7 @@ def FeatureScoring(data, config, method, printout=True):
 def CreateDataFrame(Data, config):
 	"""
 	Input:  Data 		 ... formát z load_dataset (Bunch)
-			congigg      ... konfigurace
+			config      ... konfigurace
 
 	Output: df           ... dataframe se všemi příznaky
 
@@ -368,3 +366,49 @@ def PrincipalComponentAnalysis(model, Data, n_comp, config, name, location, stat
 		pickle.dump(info, f)
 
 	return score_tab.return_table()
+
+
+def GridSearchPCA(estimator, params, Data, config, n_comp, name, location, states=3):
+	df = CreateDataFrame(Data=Data, config=config)
+	KFold = FE.KFold(Data.shape[2])
+
+	start = time()
+	GRID = ParameterGrid(params)
+	combinations = len(list(GRID))
+	print("Number of combinations {}".format(combinations))
+	bar = Scoring.Bar(combinations*10)
+	combo = 0
+	bar.start()
+	for i, g in enumerate(GRID):
+		score_tab = Scoring.ScoringTable(location=location, name=name+str(g)+str(i), n_states=states)
+		for cross in range(Data.shape[0]):
+			clf = copy(estimator)
+			X_train, y_train, X_test, y_test = KFold.fit_transform(x=df, kFoldIndex=cross)
+
+			scale = StandardScaler()
+			X_train = scale.fit_transform(X=X_train, y=y_train)
+			X_test = scale.transform(X=X_test)
+
+			pca = PCA(n_components=n_comp)
+			X_train = pca.fit_transform(X=X_train)
+			X_test = pca.transform(X=X_test)
+
+			clf.set_params(**g)
+			pred = train_and_predict(model=clf, train=X_train, test=X_test, labels=y_train, unsupervised=False)
+			score = Scoring.score(states=pred, results=np.array(y_test), unsupervised=False, pocet_stavu=states)
+			score_tab.add(scores=score)
+			combo += 1
+			bar.update(combo)
+
+		score_tab.save_table()
+		del score_tab
+		info = copy(config)
+		info["params"] = g
+		with open(location + name + str(g) + str(i) + '_config.pickle', 'wb') as f:
+			pickle.dump(info, f)
+
+	bar.finish()
+	print('Celý proces trval: {} vteřin'.format(np.around(time()-start, decimals=0)))
+	print('Hotovo!!')
+	return
+
