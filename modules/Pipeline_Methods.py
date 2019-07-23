@@ -321,9 +321,9 @@ def CreateDataFrame(Data, config):
 	return df
 
 
-def PrincipalComponentAnalysis(model, Data, n_comp, config, name, location, states=3, model_type="Tree"):
+def PrincipalComponentAnalysis(model, Data, n_comp, config, name, location, states, model_type="Tree"):
 
-	score_tab = Scoring.ScoringTable(name=name, location=location)
+	score_tab = Scoring.ScoringTable(name=name, location=location, n_states=states)
 	feature = FE.Features(config=config, normalize=True)
 	df = feature.CreateDataFrame(Data=Data)
 
@@ -349,6 +349,7 @@ def PrincipalComponentAnalysis(model, Data, n_comp, config, name, location, stat
 		score_tab.add(scores=score)
 		print("{} section done. Time elapsed from start {}".format(cross + 1, np.around(time() - start, decimals=2)))
 
+	#print(score_tab.return_table)
 	score_tab.save_table()
 
 	info = copy(config)

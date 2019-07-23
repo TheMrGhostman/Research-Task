@@ -131,7 +131,7 @@ def Accuracy(výsledek, stavy, pocet_stavu, srovnat=True, CM=[False]):
 			return [sou / len(stavy), int(len(stavy) - sou)]
 
 
-def Confusion_Matrix(výsledek, stavy, pocet_stavu, srovnat = True):
+def Confusion_Matrix(výsledek, stavy, pocet_stavu, srovnat=True):
 	"""
 	Funkce vytváří matici záměn tzn. Confusion matrix, která je potřebná pro
 		výpočty všech vyhodnocovacích metrik používaných při experimentech
